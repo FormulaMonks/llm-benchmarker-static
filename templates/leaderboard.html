@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Language Model Leaderboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .arrow-up {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      color: gray;
+      transition: color 0.3s ease;
+    }
+
+    .arrow-down {
+      position: absolute;
+      bottom: 0;
+      right: 8px;
+      color: gray;
+      transition: color 0.3s ease;
+    }
+
+    .arrow-up.blue {
+      color: blue;
+    }
+
+    .arrow-down.blue {
+      color: blue;
+    }
+
+    .sort-column {
+      background-color: #f7f7f7;
+    }
+  </style>
+  <script>
+    var sortStates = {
+      0: "original",
+      1: "original",
+      2: "original",
+      3: "original",
+      4: "original",
+      5: "original"
+    };
+
+    var lastClickedColumn = null;
+
+    function sortTable(columnIndex) {
+      if (columnIndex === 1) {
+        return; // Disable sorting for "Language Model" column
+      }
+
+      var table, rows, switching, i, x, y, shouldSwitch;
+      table = document.getElementById("leaderboard");
+      switching = true;
+
+      while (switching) {
+        switching = false;
+        rows = table.rows;
+
+        for (i = 1; i < (rows.length - 1); i++) {
+          shouldSwitch = false;
+          x = parseFloat(rows[i].getElementsByTagName("td")[columnIndex].innerText);
+          y = parseFloat(rows[i + 1].getElementsByTagName("td")[columnIndex].innerText);
+
+          if (sortStates[columnIndex] === "ascending") {
+            if (x < y) {
+              shouldSwitch = true;
+              break;
+            }
+          } else if (sortStates[columnIndex] === "descending") {
+            if (x > y) {
+              shouldSwitch = true;
+              break;
+            }
+          }
+
+          // Handle original order (no sorting)
+          if (sortStates[columnIndex] === "original") {
+            break;
+          }
+        }
+
+        if (shouldSwitch) {
+          rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+          switching = true;
+        }
+      }
+
+      // Toggle sorting order and update icon colors
+      var currentIconUp = document.getElementById(`icon-up-${columnIndex}`);
+      var currentIconDown = document.getElementById(`icon-down-${columnIndex}`);
+
+      if (lastClickedColumn !== null && lastClickedColumn !== columnIndex) {
+        var lastIconUp = document.getElementById(`icon-up-${lastClickedColumn}`);
+        var lastIconDown = document.getElementById(`icon-down-${lastClickedColumn}`);
+        lastIconUp.classList.remove("blue");
+        lastIconDown.classList.remove("blue");
+      }
+
+      if (sortStates[columnIndex] === "ascending") {
+        sortStates[columnIndex] = "descending";
+        currentIconUp.classList.remove("blue");
+        currentIconDown.classList.add("blue");
+      } else if (sortStates[columnIndex] === "descending") {
+        sortStates[columnIndex] = "original";
+        currentIconUp.classList.remove("blue");
+        currentIconDown.classList.remove("blue");
+      } else {
+        sortStates[columnIndex] = "ascending";
+        currentIconUp.classList.add("blue");
+        currentIconDown.classList.remove("blue");
+      }
+
+      // Reset background color for all columns
+      var columns = document.getElementsByTagName("th");
+      for (var j = 0; j < columns.length; j++) {
+        columns[j].classList.remove("sort-column");
+      }
+
+      // Set background color for the sorted column
+      var sortedColumn = document.getElementById(`column-${columnIndex}`);
+      sortedColumn.classList.add("sort-column");
+
+      lastClickedColumn = columnIndex;
+    }
+
+    function fetchLeaderboardData() {
+      fetch("https://example.com/api/leaderboard")
+        .then(response => response.json())
+        .then(data => {
+          var leaderboard = document.getElementById("leaderboard");
+          var tbody = leaderboard.getElementsByTagName("tbody")[0];
+
+          data.forEach(row => {
+            var newRow = document.createElement("tr");
+            newRow.innerHTML = `<td>${row.rank}</td>
+                                <td>${row.languageModel}</td>
+                                <td>${row.knowledge}</td>
+                                <td>${row.reasoning}</td>
+                                <td>${row.discipline}</td>
+                                <td>${row.understanding}</td>`;
+
+            tbody.appendChild(newRow);
+          });
+        })
+        .catch(error => {
+          console.log("Error fetching leaderboard data:", error);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchLeaderboardData);
+  </script>
+</head>
+<body class="bg-gray-100">
+  <h1 class="text-4xl font-bold mt-8 mx-auto text-center">Language Model Leaderboard</h1>
+  <div class="mx-auto max-w-2xl bg-white rounded-lg shadow-lg overflow-hidden mt-8">
+    <table id="leaderboard" class="w-full">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)" id="column-0">
+            Rank
+            <span id="icon-up-0" class="arrow-up"><i class="fas fa-caret-up"></i></span>
+            <span id="icon-down-0" class="arrow-down"><i class="fas fa-caret-down"></i></span>
+          </th>
+          <th>
+            Language Model
+          </th>
+          <th onclick="sortTable(2)" id="column-2">
+            Knowledge
+            <span id="icon-up-2" class="arrow-up"><i class="fas fa-caret-up"></i></span>
+            <span id="icon-down-2" class="arrow-down"><i class="fas fa-caret-down"></i></span>
+          </th>
+          <th onclick="sortTable(3)" id="column-3">
+            Reasoning
+            <span id="icon-up-3" class="arrow-up"><i class="fas fa-caret-up"></i></span>
+            <span id="icon-down-3" class="arrow-down"><i class="fas fa-caret-down"></i></span>
+          </th>
+          <th onclick="sortTable(4)" id="column-4">
+            Discipline
+            <span id="icon-up-4" class="arrow-up"><i class="fas fa-caret-up"></i></span>
+            <span id="icon-down-4" class="arrow-down"><i class="fas fa-caret-down"></i></span>
+          </th>
+          <th onclick="sortTable(5)" id="column-5">
+            Understanding
+            <span id="icon-up-5" class="arrow-up"><i class="fas fa-caret-up"></i></span>
+            <span id="icon-down-5" class="arrow-down"><i class="fas fa-caret-down"></i></span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+            <td>1</td>
+            <td>GPT-3.5</td>
+            <td>9.5</td>
+            <td>9.2</td>
+            <td>9.3</td>
+            <td>9.4</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>GPT-3</td>
+            <td>9.2</td>
+            <td>9.1</td>
+            <td>9.2</td>
+            <td>9.3</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>GPT-2</td>
+            <td>8.8</td>
+            <td>8.7</td>
+            <td>8.9</td>
+            <td>8.8</td>
+          </tr>
+        <!-- Rows will be populated dynamically -->
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
